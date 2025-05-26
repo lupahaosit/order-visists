@@ -879,10 +879,10 @@ class MainActivity : ComponentActivity() {
     @Composable fun ChooseClassPage(classesDivision: String){
         Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()){
             Column {
-                createSelect("Ваш класс", classList, classNumber)
+                createSelect("Ваша группа", classList, classNumber)
                 Spacer(modifier = Modifier.height(50.dp))
                 Button(onClick = {
-                    if (classNumber.value == "" || classNumber.value == "Ваш класс"){
+                    if (classNumber.value == "" || classNumber.value == "Ваша группа"){
                         return@Button
                     }
                     setClass(classNumber.value)
@@ -958,10 +958,10 @@ class MainActivity : ComponentActivity() {
                         IsNewClassCreating = true
                     }
                 }) {
-                    Text("Создать новый класс")
+                    Text("Создать новыую группу")
                 }
                 if (IsNewClassCreating){
-                    TextField(value = className, onValueChange = {className = it}, placeholder = {Text("Название класса") } )
+                    TextField(value = className, onValueChange = {className = it}, placeholder = {Text("Название группы") } )
                 }
             }
 
