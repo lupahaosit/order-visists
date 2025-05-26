@@ -338,20 +338,12 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-
+    //Добавление пользователя с ролью (ожидался делегат, для будущего, но не срослось)
     private fun addUserWithRole(itemSaveCommand : (String, String, String, String) -> Unit) {
         itemSaveCommand(email.value, role.value, name.value, surname.value);
     }
-    //region Marks logic
 
-    //endregion
-
-    //region visitsLogic
-    //endregion
-
-    // region workWithDatabase
-
-    //classesDivision - тип приложения, с оценками или посещениями
+    //Установка класса ученику
     private fun setClass(classNumber : String){
         var database = Firebase.database.reference
         var dataRef = database.child("Marks").child("Users").child(email.value.split('.')[0])
@@ -361,6 +353,7 @@ class MainActivity : ComponentActivity() {
 
     }
 
+    //Проверка всех предметов у класса, дополнение в случае нужды
     private suspend fun checkAllSubjects(){
         val database = Firebase.database.reference
         val dataRef = database.child("Marks").child("Marks")
@@ -391,6 +384,7 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    //Получение всех классов, что есть в бд
     private suspend fun getAllClasses(classesDivision : String){
 
         var database = Firebase.database.reference
@@ -405,6 +399,7 @@ class MainActivity : ComponentActivity() {
         classList.addAll(x)
     }
 
+    //Полученние всех пользователей, независимо, учитель или ученик
     suspend fun getAllUsers(classesDivision: String): List<User> {
         val users = mutableListOf<User>()
         val database = Firebase.database.reference
@@ -429,6 +424,7 @@ class MainActivity : ComponentActivity() {
         return users
     }
 
+    //Получение всех предметов, что есть в бд
     private suspend fun getAllSubjects() : List<String>{
         var database = Firebase.database.reference
         var dataRef = database.child("Marks").child("Subjects")
@@ -439,6 +435,7 @@ class MainActivity : ComponentActivity() {
 
     }
 
+    //создание и добавление класса в бд
     private suspend fun createClassAndAdd(className : String){
         var subjects = getAllSubjects()
         var database = Firebase.database.reference.child("Marks")
@@ -449,27 +446,7 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    private fun getAllUsersStudents(classesDivision: String, onComplete: () -> Unit = {}) {
-        usersList.clear()
-        val database = Firebase.database.reference
-        val dataRef = database.child(classesDivision).child("Users")
-
-        dataRef.get().addOnSuccessListener { snapshot ->
-            snapshot.children.forEach { user ->
-                val name = user.child("name").getValue(String::class.java) ?: ""
-                val surname = user.child("surname").getValue(String::class.java) ?: ""
-                val email = user.child("email").getValue(String::class.java) ?: ""
-                val role = user.child("role").getValue(String::class.java) ?: ""
-
-                if (role == "Ученик") {
-                    val classNumber = user.child("classNumber").getValue(String::class.java) ?: ""
-                    usersList.add(User(name, surname, role, email, classNumber))
-                }
-            }
-            onComplete() // Уведомляем об окончании загрузки
-        }
-    }
-
+    //Сохраняем пользователя в бд
     private fun saveUserToFirebaseMarks(email : String, role : String, name : String, surname : String) : Unit{
         var database = Firebase.database.reference
         var dataRef = database.child("Marks").child("Users").child(email.split('.')[0])
@@ -477,6 +454,7 @@ class MainActivity : ComponentActivity() {
         dataRef.setValue(User(name, surname, role, email))
     }
 
+    //Установка оценки пользователя в бд
     private fun setMark(classNumber: String, studentEmail: String, markValue: Int, subject: String, date: String, month: String = "Январь") {
         if (currentUser.role != "Учитель") {
             Log.e("Firebase", "Только учителя могут выставлять оценки.")
@@ -498,6 +476,7 @@ class MainActivity : ComponentActivity() {
             }
     }
 
+    //Парсер дат с русского(исприть по возможности)
     fun parseRussianDate(month: String, day: String, year: Int = 2025): Date? {
         val monthNumber = when (month.lowercase()) {
             "январь" -> 1
@@ -521,6 +500,7 @@ class MainActivity : ComponentActivity() {
         return formatter.parse(dateString)
     }
 
+    //Получение всех оценок пользователя за период времени по каждому предмету
     private suspend fun getStudentMarksBySubject(classNumber: String, subject: String, month: String = "сентябрь", studentEmail : String ) : HashMap<Date, Mark?> {
         val semesterStartDate = parseRussianDate(semestrStartMonth, semestrStartDay.toString(), 2025)
         val semesterEndDate = parseRussianDate(semestrEndMonth, semestrEndDay.toString(), 2025)
@@ -548,6 +528,8 @@ class MainActivity : ComponentActivity() {
         return dataSubjectMarkDictionary;
     }
 
+
+    //Получение оценок всего класса в определенный день
     suspend fun getClassMarksByDay(
         classNumber: String,
         subject: String,
@@ -604,6 +586,8 @@ class MainActivity : ComponentActivity() {
         return result
     }
 
+
+    //обновляем записи класса у пользователя
     private fun saveUsersClass(){
         var database = Firebase.database.reference
         var dataRef = database.child("Marks").child("Users").child(email.value.substringBefore('.'))
@@ -611,6 +595,7 @@ class MainActivity : ComponentActivity() {
         dataRef.child("classNumber").setValue(classNumber.value)
     }
 
+    //Создаём все даты за указанный период
     private fun generateAllDatesInSemester(
         startMonth: String,
         startDay: Int,
@@ -639,23 +624,8 @@ class MainActivity : ComponentActivity() {
     }
 
     //endregion
-    private fun getUserRole(email: String) {
-        var database = Firebase.database.reference
-        var userRef = database.child("Users").child(email)
 
-        userRef.child("role").addListenerForSingleValueEvent(object : ValueEventListener {
-            override fun onDataChange(snapshot: DataSnapshot) {
-                var role = snapshot.getValue(String::class.java)
-
-            }
-
-            override fun onCancelled(error: DatabaseError) {
-                Log.e("Firebase", "Error loading user role", error.toException())
-            }
-
-        })
-    }
-
+    //функция входа
     private fun login() {
         if (email.value.isEmpty() || password.value.isEmpty()) {
             Toast.makeText(
@@ -696,6 +666,7 @@ class MainActivity : ComponentActivity() {
             }
     }
 
+    //функция регистрации
     private fun registerMarks() {
         if (email.value.isEmpty() || password.value.isEmpty() || name.value.isEmpty() || surname.value.isEmpty()) {
             Toast.makeText(
@@ -741,27 +712,19 @@ class MainActivity : ComponentActivity() {
 
     }
 
-    private fun registerVisits(){
-        TODO()
-    }
-
+    //функция выхода
     private fun logOut() {
         Firebase.auth.signOut()
     }
     //endregion
 
 
-    //region work with Database
-    fun saveMarkToDatabse(month: String, day: Int, mark: Int) {
-        var database = Firebase.database.reference
-        var ratingRef = database.child("Май").child("17")
-        ratingRef.setValue(4)
-
-    }
 
     //endregion
 
     //region Composable Elements Marks
+
+    //страница входа
     @Composable
     private fun loginPageMarks() {
         var isPasswordVisible by remember { mutableStateOf(false) }
@@ -819,6 +782,7 @@ class MainActivity : ComponentActivity() {
 
         }
     }
+    //страница регистрации
     @Composable
     private fun registerPageMarks() {
         var isPasswordVisible by remember { mutableStateOf(false) }
@@ -911,242 +875,7 @@ class MainActivity : ComponentActivity() {
     }
     //endregion
 
-    //region Composable Elements Visits
-    @Composable
-    private fun loginPageVisits() {
-        Surface(
-            modifier = Modifier.fillMaxSize(),
-            color = MaterialTheme.colorScheme.background
-        ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 32.dp)
-                    .verticalScroll(rememberScrollState()),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
-            ) {
-                // Логотип или заголовок
-                Icon(
-                    imageVector = Icons.Filled.Lock,
-                    contentDescription = "Login",
-                    modifier = Modifier.size(80.dp),
-                    tint = MaterialTheme.colorScheme.primary
-                )
-
-                Spacer(modifier = Modifier.height(40.dp))
-
-                // Заголовок
-                Text(
-                    text = "Добро пожаловать",
-                    style = MaterialTheme.typography.headlineMedium,
-                    color = MaterialTheme.colorScheme.onBackground
-                )
-
-                Spacer(modifier = Modifier.height(24.dp))
-
-                // Поле email
-                OutlinedTextField(
-                    value = email.value,
-                    onValueChange = { email.value = it },
-                    label = { Text("Почта") },
-                    leadingIcon = {
-                        Icon(Icons.Filled.Email, contentDescription = "Email")
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
-
-                    )
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // Поле пароля
-                OutlinedTextField(
-                    value = password.value,
-                    onValueChange = { password.value = it },
-                    label = { Text("Пароль") },
-                    leadingIcon = {
-                        Icon(Icons.Filled.Lock, contentDescription = "Password")
-                    },
-                    visualTransformation = PasswordVisualTransformation(),
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
-
-                    )
-
-                Spacer(modifier = Modifier.height(24.dp))
-
-                // Кнопка входа
-                Button(
-                    onClick = { login() },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(50.dp),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.primary,
-                        contentColor = MaterialTheme.colorScheme.onPrimary
-                    ),
-                    elevation = ButtonDefaults.buttonElevation(
-                        defaultElevation = 4.dp,
-                        pressedElevation = 8.dp
-                    )
-                ) {
-                    Text("Войти", style = MaterialTheme.typography.labelLarge)
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // Альтернативный вариант входа
-                Text(
-                    text = "или",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // Кнопка регистрации
-                OutlinedButton(
-                    onClick = { navController.navigate("register") },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(50.dp),
-                    shape = RoundedCornerShape(12.dp),
-                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary),
-                    colors = ButtonDefaults.outlinedButtonColors(
-                        contentColor = MaterialTheme.colorScheme.primary
-                    )
-                ) {
-                    Text("Создать аккаунт", style = MaterialTheme.typography.labelLarge)
-                }
-
-            }
-        }
-    }
-
-    @Composable
-    private fun registerPageVisits(){
-        Surface(
-            modifier = Modifier.fillMaxSize(),
-            color = MaterialTheme.colorScheme.background
-        ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 32.dp)
-                    .verticalScroll(rememberScrollState()),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
-            ) {
-                // Заголовок
-                Text(
-                    text = "Регистрация",
-                    style = MaterialTheme.typography.headlineMedium,
-                    color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.padding(bottom = 32.dp)
-                )
-
-                // Поле email
-                OutlinedTextField(
-                    value = email.value,
-                    onValueChange = { email.value = it },
-                    label = { Text("Почта") },
-                    leadingIcon = { Icon(Icons.Default.Email, contentDescription = null) },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = MaterialTheme.colorScheme.primary,
-                        unfocusedBorderColor = MaterialTheme.colorScheme.outline
-                    )
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // Поле пароля
-                OutlinedTextField(
-                    value = password.value,
-                    onValueChange = { password.value = it },
-                    label = { Text("Пароль") },
-                    leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null) },
-                    visualTransformation = PasswordVisualTransformation(),
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = MaterialTheme.colorScheme.primary,
-                        unfocusedBorderColor = MaterialTheme.colorScheme.outline
-                    )
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // Поле имени
-                OutlinedTextField(
-                    value = name.value,
-                    onValueChange = { name.value = it },
-                    label = { Text("Имя") },
-                    leadingIcon = { Icon(Icons.Default.Person, contentDescription = null) },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = MaterialTheme.colorScheme.primary,
-                        unfocusedBorderColor = MaterialTheme.colorScheme.outline
-                    )
-                )
-
-                Spacer(modifier = Modifier.height(32.dp))
-
-                // Кнопка регистрации
-                FilledTonalButton(
-                    onClick = { registerVisits() },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(50.dp),
-                    shape = RoundedCornerShape(12.dp)
-                ) {
-                    Text("Зарегистрироваться")
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // Разделитель
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Divider(
-                        modifier = Modifier.weight(1f),
-                        color = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)
-                    )
-                    Text(
-                        text = "или",
-                        modifier = Modifier.padding(horizontal = 8.dp),
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                    )
-                    Divider(
-                        modifier = Modifier.weight(1f),
-                        color = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // Кнопка входа
-                OutlinedButton(
-                    onClick = { navController.navigate("login") },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(50.dp),
-                    shape = RoundedCornerShape(12.dp)
-                ) {
-                    Text("Уже есть аккаунт? Войти")
-                }
-            }
-        }
-
-    }
-    //endregion
-
+    //страница выбора класса ученика
     @Composable fun ChooseClassPage(classesDivision: String){
         Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()){
             Column {
@@ -1170,6 +899,7 @@ class MainActivity : ComponentActivity() {
 
     }
 
+    //страница выбора класса для учителя
     @Composable
     fun classListPage(){
         var IsNewClassCreating by remember {mutableStateOf(false)}
@@ -1238,6 +968,7 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    //создание select-а, в обычном compose такого нет
     @Composable
     fun createSelect(title : String, itemsList : List<String>, targetValue : MutableState<String>){
         var expandedValues by remember {mutableStateOf(false);}
@@ -1269,6 +1000,8 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+
+    //Страница выбора месяца учителем
     @Composable
     fun MonthPage() {
         Box(
@@ -1289,6 +1022,7 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    //Страница выбора месяца(красивая и доведенная до ума)
     @Composable
     fun MonthsGrid() {
         LazyVerticalGrid(
@@ -1329,7 +1063,7 @@ class MainActivity : ComponentActivity() {
     }
 
 
-
+    //Страница выбора дня учителем
     @Composable
     fun DaysGrid(month: String) {
         val days = monthsWithDays[month]
@@ -1384,7 +1118,7 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-
+    //Страница оценок за день, для учителя
     @Composable
     fun ClassDayMarks() {
         var marksList by remember { mutableStateOf<List<Mark>>(emptyList()) }
@@ -1503,30 +1237,8 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
-//    @Composable
-//    private fun UserMarks(){
-//        var marksDictionary by remember { mutableStateOf<Map<Date, Mark?>>(emptyMap()) }
-//
-//        LaunchedEffect(Unit) {
-//            marksDictionary = getStudentMarksBySubject(chosenClass.value, "Math", studentEmail = "igor2@mail")
-//        }
-//
-//        Box (modifier = Modifier.fillMaxSize()){
-//            if (!isDataLoaded.value) {
-//                CircularProgressIndicator()
-//            } else {
-//                LazyColumn(horizontalAlignment = Alignment.CenterHorizontally,
-//                    modifier = Modifier.align(Alignment.Center)) {
-//                    items(marksDictionary.keys.toList()) { key ->
-//                        Text(key.toString())
-//                        Text("${marksDictionary[key]?.mark?: ""}")
-//                    }
-//                }
-//            }
-//
-//        }
-//    }
 
+    //Страница выбора предмета учителем
     @Composable
     private fun SubjectListPage() {
         var subjects by remember { mutableStateOf<List<String>>(emptyList()) }
@@ -1587,6 +1299,7 @@ class MainActivity : ComponentActivity() {
 
     //endregion
 
+    //Страница оценок пользователя для ученика
     @Composable
     fun SubjectGradesPage() {
         var subjects2 by remember { mutableStateOf<List<String>>(emptyList()) }
@@ -1607,6 +1320,7 @@ class MainActivity : ComponentActivity() {
         SubjectMarksTable(subjectWithMarks)
     }
 
+    //Сама сводная страница оценок и предмета пользователя
     @Composable
     fun SubjectMarksTable(subjectWithMarks: Map<String, Map<Date, Mark?>>) {
 
@@ -1816,6 +1530,7 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    //Страница уведомлений после нажатия на колокольчик
     @Composable
     private fun NotificationsDescription(subjectNames: List<String>) {
         Column(
@@ -1870,6 +1585,7 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    //header, тут и так понятно
     @Composable
     private fun header() {
         val backgroundColor = Color(0xFF3F51B5) // Тёмно-синий
@@ -1968,6 +1684,7 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    //Страница настроек(дополнить, если понадобиться
     @Composable
     private fun SettingsPage(){
         Box(Modifier.fillMaxSize()){
@@ -1983,6 +1700,8 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+
+    //Страница с графиком оценок
     @Composable
     private fun ReportPage() {
         var subjects2 by remember { mutableStateOf<List<String>>(emptyList()) }
@@ -2017,6 +1736,7 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    //Сам график оценок
     @Composable
     fun BarChart(data: Map<Int, Int>) {
         val maxCount = (data.values.maxOrNull() ?: 1).toFloat()
@@ -2051,6 +1771,7 @@ class MainActivity : ComponentActivity() {
     }
 
 
+    //Страница со справочником
     @Composable
     private fun DirectoryPage(){
         val expandedItems = remember { mutableStateMapOf<String, Boolean>() }
@@ -2095,63 +1816,6 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-
-
-
-    @Composable
-    fun SimpleAttendancePage() {
-        val date = "15 мая 2024"
-        val subject = "Физика"
-        val students = listOf(
-            "Смирнов А." to "П",
-            "Козлова А." to "П",
-            "Новиков Д." to "Н",
-            "Волкова Е." to "П",
-            "Фёдоров М." to "Н",
-            "Павлова С." to "П",
-            "Лебедев И." to "П"
-        )
-
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(16.dp)
-        ) {
-            Row(){
-                // Шапка
-                Text(date, fontSize = 14.sp, color = Color.Gray)
-                Text(subject, fontSize = 20.sp, fontWeight = FontWeight.Bold)
-
-            }
-
-
-            Spacer(Modifier.height(16.dp))
-
-            // Таблица
-            Row(Modifier.fillMaxWidth()) {
-                // Колонка имен
-                Column(Modifier.weight(1f)) {
-                    Text("Ученик", fontWeight = FontWeight.Bold)
-                    students.forEach { (name, _) ->
-                        Text(name, modifier = Modifier.padding(vertical = 8.dp))
-                    }
-                }
-
-                // Колонка статусов
-                Column(Modifier.width(60.dp)) {
-                    Text("Статус", fontWeight = FontWeight.Bold)
-                    students.forEach { (_, status) ->
-                        Text(
-                            text = status,
-                            color = if (status == "П") Color.Green else Color.Red,
-                            modifier = Modifier.padding(vertical = 8.dp)
-                        )
-                    }
-                }
-            }
-        }
-    }
-    //endregion
 }
 
 
