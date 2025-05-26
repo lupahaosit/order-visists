@@ -227,13 +227,24 @@ class MainActivity : ComponentActivity() {
                         }
                     }
                     composable("visitsMainPage") {
-                        SimpleAttendancePage()
+                        Column {
+                            header()
+                            SimpleAttendancePage()
+                        }
+
                     }
                     composable ("teacherVisitsPage"){
-                        ChooseVisitsDataPage()
+                        Column {
+                            header()
+                            ChooseVisitsDataPage()
+                        }
+
                     }
                     composable("visitsPage"){
-                        VisitsPage()
+                        Column {
+                            header()
+                            VisitsPage()
+                        }
                     }
                     composable("register") {
                         //registerPageMarks()
@@ -243,7 +254,8 @@ class MainActivity : ComponentActivity() {
                         }
                     }
                     composable("directory"){
-                        Column {  header()
+                        Column {
+                            header()
                             DirectoryPage()
                         }
                     }
@@ -487,11 +499,13 @@ class MainActivity : ComponentActivity() {
                     if (role.value == "Ученик"){
                         navController.navigate("visitsMainPage")
                         saveUserToFirebase(email.value, role.value, name.value, surname.value, chosenClass.value)
+                        currentUser = User(name.value, surname.value, email = email.value, role = role.value, classNumber = chosenClass.value)
                     }else{
                         navController.navigate("teacherVisitsPage")
                         saveUserToFirebase(email.value, role.value, name.value, surname.value )
+                        currentUser = User(name.value, surname.value, email = email.value, role = role.value)
                     }
-                    currentUser = User(name.value, surname.value, email = email.value, role = role.value)
+
                     usersList.add(currentUser)
 
 
@@ -870,7 +884,8 @@ class MainActivity : ComponentActivity() {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(50.dp)
+                .height(70.dp)
+                .padding(top = 20.dp)
                 .background(backgroundColor)
                 .padding(horizontal = 16.dp),
             contentAlignment = Alignment.CenterStart
