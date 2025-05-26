@@ -36,6 +36,7 @@ import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Button
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Divider
@@ -878,116 +879,134 @@ class MainActivity : ComponentActivity() {
     //Функция для создания header-а
     @Composable
     private fun header() {
-        val backgroundColor = Color(0xFF3F51B5) // Тёмно-синий
+        val backgroundColor = Color(0xFF3F51B5)
+        val iconBackground = Color.White.copy(alpha = 0.15f)
         val textColor = Color.White
+        val user = Firebase.auth.currentUser
 
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(70.dp)
-                .padding(top = 20.dp)
                 .background(backgroundColor)
-                .padding(horizontal = 16.dp),
-            contentAlignment = Alignment.CenterStart
+                .padding(horizontal = 20.dp),
+            contentAlignment = Alignment.Center
         ) {
             Row(
-                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxSize(),
                 horizontalArrangement = Arrangement.SpaceBetween,
-                modifier = Modifier.fillMaxWidth()
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                var user = Firebase.auth.currentUser
-                if (user != null) {
-                    if (currentUser.role == "Ученик") {
+                // === ЛЕВАЯ ЧАСТЬ ===
+                when {
+                    user == null -> {
+                        Text(
+                            text = "Войти",
+                            color = textColor,
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(50))
+                                .background(iconBackground)
+                                .clickable { navController.navigate("login") }
+                                .padding(horizontal = 20.dp, vertical = 8.dp)
+                        )
+                    }
+
+                    currentUser.role == "Ученик" -> {
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
-                                imageVector = Icons.Default.School,
-                                contentDescription = "Оценки",
-                                tint = textColor,
-                                modifier = Modifier.size(20.dp)
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(
-                                text = "Посещаемость",
-                                color = textColor,
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 18.sp,
-                                modifier = Modifier.clickable { navController.navigate("monthsGrid") }
-                            )
-                        }
-                    } else {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
-                                imageVector = Icons.Default.MenuBook,
-                                contentDescription = "Дневник",
-                                tint = textColor,
+                            IconButton(
+                                onClick = { navController.navigate("monthsGrid") },
                                 modifier = Modifier
-                                    .size(20.dp)
-                                    .clickable { navController.navigate("subjectGradesPage") }
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
+                                    .size(40.dp)
+                                    .background(iconBackground, CircleShape)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.School,
+                                    contentDescription = "Посещаемость",
+                                    tint = textColor
+                                )
+                            }
+                            Spacer(modifier = Modifier.width(10.dp))
                             Text(
                                 text = "Посещаемость",
-                                Modifier.clickable { navController.navigate("monthsGrid") },
                                 color = textColor,
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 14.sp
+                                fontSize = 18.sp,
+                                fontWeight = FontWeight.SemiBold
                             )
                         }
                     }
 
-                }else{
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(
-                            text = "Войти",
-                            Modifier.clickable { navController.navigate("login") },
-                            color = textColor,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 14.sp
-                        )
+                    else -> {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            IconButton(
+                                onClick = { navController.navigate("subjectGradesPage") },
+                                modifier = Modifier
+                                    .size(40.dp)
+                                    .background(iconBackground, CircleShape)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.MenuBook,
+                                    contentDescription = "Дневник",
+                                    tint = textColor
+                                )
+                            }
+                            Spacer(modifier = Modifier.width(10.dp))
+                            Column {
+                                Text(
+                                    text = "Дневник",
+                                    color = textColor,
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                Text(
+                                    text = "Посещаемость",
+                                    color = textColor,
+                                    fontSize = 14.sp,
+                                    modifier = Modifier.clickable {
+                                        navController.navigate("monthsGrid")
+                                    }
+                                )
+                            }
+                        }
                     }
                 }
 
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Divider(
-                        color = Color.White.copy(alpha = 0.5f),
+                // === ПРАВАЯ ЧАСТЬ ===
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    IconButton(
+                        onClick = { navController.navigate("directory") },
                         modifier = Modifier
-                            .height(24.dp)
-                            .width(1.dp)
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Icon(
-                        imageVector = Icons.Default.Info,
-                        contentDescription = "Справочник",
-                        tint = textColor,
-                        modifier = Modifier.size(20.dp)
-                    )
-                    Text(
-                        text = "Справочник",
-                        Modifier.clickable{navController.navigate("directory")},
-                        color = textColor,
-                        fontWeight = FontWeight.Medium,
-                        fontSize = 14.sp
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Divider(
-                        color = Color.White.copy(alpha = 0.5f),
+                            .size(36.dp)
+                            .background(iconBackground, CircleShape)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Info,
+                            contentDescription = "Справочник",
+                            tint = textColor
+                        )
+                    }
+                    IconButton(
+                        onClick = { navController.navigate("settingsPage") },
                         modifier = Modifier
-                            .height(24.dp)
-                            .width(1.dp)
-                    )
-                    Spacer(modifier = Modifier.width(16.dp))
-                    Icon(
-                        imageVector = Icons.Default.Settings,
-                        contentDescription = "Настройки",
-                        tint = textColor,
-                        modifier = Modifier
-                            .size(48.dp)
-                            .clickable { navController.navigate("settingsPage") }
-                    )
+                            .size(36.dp)
+                            .background(iconBackground, CircleShape)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Settings,
+                            contentDescription = "Настройки",
+                            tint = textColor
+                        )
+                    }
                 }
             }
         }
     }
+
+
 
     //кнопка для перехода в настройки(выход из аккаунта)
     @Composable
@@ -1131,7 +1150,7 @@ class MainActivity : ComponentActivity() {
             Spacer(modifier = Modifier.height(24.dp))
 
             if(visitsStat["Н"]?.let { it.size > 5 } == true){
-                Text("У вас проблема с предметом, ваша посещаемость слишком низка, вы отсутвовали на ${visitsStat["P"]?.size} занятий!", color = Color.Red)
+                Text("У вас проблема с предметом, ваша посещаемость слишком низка, вы отсутвовали на ${visitsStat["Н"]?.size} занятий!", color = Color.Red)
             }
             AttendanceBarChart(visitsStat)
 
@@ -1148,7 +1167,7 @@ class MainActivity : ComponentActivity() {
                             .padding(vertical = 8.dp),
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Text("День $day", style = MaterialTheme.typography.bodyLarge)
+                        Text("Занятие $day", style = MaterialTheme.typography.bodyLarge)
                         Text(
                             text = visit ?: "-",
                             style = MaterialTheme.typography.bodyLarge,
