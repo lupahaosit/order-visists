@@ -115,12 +115,7 @@ class MainActivity : ComponentActivity() {
         "ноябрь" to 30,
         "декабрь" to 31
     )
-    val semestrStartMonth = "сентябрь"
-    val semestrEndMonth = "декабрь"
-    val semestrEndDay = 31
-    val semestrStartDay = 1
     private var auth = Firebase.auth
-    private var roles = listOf("Ученик", "Учитель")
     private var subjects = listOf("Элементы высшей математики",
             "Основы проектирования базы данных",
             "МДК",
@@ -257,14 +252,6 @@ class MainActivity : ComponentActivity() {
                             SettingsPage()
                         }
                     }
-                    composable ("notificationsDescription/{subjectNames}"){ inputSubjects ->
-                        val problemSubjects = inputSubjects.arguments
-                        var sub =  problemSubjects?.getString("subjectNames")?.split(';')?.toList()!!
-                        Column{
-                            header()
-                            NotificationsDescription(sub)
-                        }
-                    }
                 }
             }else{
                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -328,33 +315,6 @@ class MainActivity : ComponentActivity() {
         subjects.forEach {subject ->
             database.child("Visits").child(className).child(subject).setValue("")
         }
-    }
-
-    //получаем все посещения по классу
-    private suspend fun getClassVisits() : List<Visit>{
-        var database = Firebase.database.reference
-        var dataRef = database.child("Visits").child("Visits").child(chosenClass.value)
-            .child(chosenSubject.value).child(chosenMonth.value).child(chosenDay.value)
-        var snapshot = dataRef.get().await()
-        var visits = snapshot.children.map {
-            Visit(it.child("email").value.toString(), it.child("visit").value.toString(), it.child("name").value.toString())
-        }.toList()
-        return visits
-    }
-
-    //получение всех учеников класса
-    private suspend fun getAllClassUsers() : List<User>{
-        var database = Firebase.database.reference
-        var dataRef = database.child("Visits").child("Users")
-
-        var snapshot = dataRef.get().await()
-        var classNumber = snapshot.children.map { student ->
-            student.child("classNumber")}
-        var students = snapshot.children.filter { student ->
-            student.child("classNumber").value.toString() == chosenClass.value }
-            .map{ User(name = it.child("name").value.toString(), surname = it.child("surname").value.toString(), role = it.child("role").value.toString(), email = it.child("email").value.toString()) }
-
-        return students
     }
 
     //получение студентво и их оценок, на пропусках '-'
@@ -444,14 +404,7 @@ class MainActivity : ComponentActivity() {
         return isClassExist
     }
 
-    private suspend fun getStudentsVisitsPerMonth(){
-        var database = Firebase.database.reference
-        var dataRef = database.child("Visits").child("Visits")
-            .child(currentUser.classNumber!!).child(chosenSubject.value).child(chosenMonth.value)
-
-        var snapshot = dataRef.get().await()
-    }
-
+    //Функция входа
     private fun login() {
         if (email.value.isEmpty() || password.value.isEmpty()) {
             Toast.makeText(
@@ -492,6 +445,7 @@ class MainActivity : ComponentActivity() {
             }
     }
 
+    //Функция регистрации пользователя
     private suspend fun registerVisits(){
         var isClassExist = false
         if (email.value.isEmpty() || password.value.isEmpty() || name.value.isEmpty()
@@ -550,11 +504,12 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
-
+    //Выход из аккаунта
     private fun logOut() {
         Firebase.auth.signOut()
     }
 
+    //Создаём словарь с День месяца : Отметка о посещении
     private suspend fun getAttendanceListForMonth (): Map<Int, String?> {
         var database = Firebase.database.reference
         val attendanceList = mutableMapOf<Int, String?>()
@@ -577,6 +532,7 @@ class MainActivity : ComponentActivity() {
 
 
     //region Composable Elements Visits
+    //Страница входа
     @Composable
     private fun loginPageVisits() {
         Surface(
@@ -690,6 +646,7 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    //страница регистрации
     @Composable
     private fun registerPageVisits(){
         var isUserStudent by remember{ mutableStateOf(true)}
@@ -870,74 +827,7 @@ class MainActivity : ComponentActivity() {
     }
     //endregion
 
-    @Composable
-    fun classListPage(){
-        var IsNewClassCreating by remember {mutableStateOf(false)}
-        var className by remember {mutableStateOf("")}
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(Color(0xFFF5F5F5)) // мягкий светлый фон
-        ) {
-            Text(
-                text = "Классы",
-                style = MaterialTheme.typography.headlineMedium,
-                modifier = Modifier.padding(16.dp),
-                color = Color(0xFF3F51B5), // синий заголовок
-                fontWeight = FontWeight.Bold
-            )
-
-            LazyColumn(
-                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                items(classList) { classItem ->
-                    Card(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable {
-                                chosenClass.value = classItem
-                                navController.navigate("subjectChoosePage")
-                            },
-                        colors = cardColors(containerColor = Color.White),
-                        elevation = cardElevation(defaultElevation = 4.dp),
-                        shape = RoundedCornerShape(12.dp)
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .padding(16.dp)
-                        ) {
-                            Text(
-                                text = classItem,
-                                style = MaterialTheme.typography.bodyLarge,
-                                color = Color.Black
-                            )
-                        }
-                    }
-                }
-            }
-
-            Row{
-                Button(onClick = {
-                    if (IsNewClassCreating){
-                        IsNewClassCreating = false
-                        lifecycleScope.launch {
-                            createClassAndAdd(className)
-                        }
-                    }else{
-                        IsNewClassCreating = true
-                    }
-                }) {
-                    Text("Создать новый класс")
-                }
-                if (IsNewClassCreating){
-                    TextField(value = className, onValueChange = {className = it}, placeholder = {Text("Название класса") } )
-                }
-            }
-
-        }
-    }
-
+    //Функция для создания select
     @Composable
     fun createSelect(title : String, itemsList : List<String>, targetValue : MutableState<String>){
         var expandedValues by remember {mutableStateOf(false);}
@@ -969,119 +859,8 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    @Composable
-    private fun SubjectListPage() {
-        var subjects by remember { mutableStateOf<List<String>>(emptyList()) }
 
-        LaunchedEffect(Unit) {
-            subjects = getAllSubjects()
-        }
-
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(Color(0xFFF5F5F5))
-                .padding(16.dp)
-        ) {
-            Text(
-                text = "Предметы",
-                style = MaterialTheme.typography.headlineSmall,
-                color = Color(0xFF3F51B5),
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(bottom = 16.dp)
-            )
-
-            LazyColumn(
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier.fillMaxSize()
-            ) {
-                items(subjects) { subject ->
-                    Card(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(60.dp)
-                            .clickable {
-                                chosenSubject.value = subject
-                                navController.navigate("monthsPage")
-                            },
-                        shape = RoundedCornerShape(12.dp),
-                        colors = cardColors(containerColor = Color.White),
-                        elevation = cardElevation(defaultElevation = 4.dp)
-                    ) {
-                        Box(
-                            contentAlignment = Alignment.CenterStart,
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .padding(start = 20.dp)
-                        ) {
-                            Text(
-                                text = subject,
-                                style = MaterialTheme.typography.bodyLarge,
-                                fontWeight = FontWeight.Medium
-                            )
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    @Composable
-    private fun NotificationsDescription(subjectNames: List<String>) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            if (subjectNames.isEmpty()) {
-                Text(
-                    text = "Нет проблемных предметов!",
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = Color.Green
-                )
-            } else {
-                Text(
-                    text = "Внимание: проблемные предметы",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.Red
-                )
-
-                Divider(color = Color.LightGray, thickness = 1.dp)
-
-                subjectNames.forEach { subject ->
-                    if (subject != "") {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.padding(vertical = 4.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Warning,
-                                contentDescription = null,
-                                tint = Color(0xFFFFA000),
-                                modifier = Modifier.size(18.dp)
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(
-                                text = subject,
-                                style = MaterialTheme.typography.bodyMedium,
-                                modifier = Modifier.weight(1f)
-                            )
-                            Text(
-                                text = "средний балл ниже 3.5",
-                                color = Color.Gray,
-                                style = MaterialTheme.typography.bodySmall
-                            )
-                        }
-                    }
-
-                }
-            }
-        }
-    }
-
+    //Функция для создания header-а
     @Composable
     private fun header() {
         val backgroundColor = Color(0xFF3F51B5) // Тёмно-синий
@@ -1194,6 +973,7 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    //кнопка для перехода в настройки(выход из аккаунта)
     @Composable
     private fun SettingsPage(){
         Box(Modifier.fillMaxSize()){
@@ -1209,40 +989,7 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    @Composable
-    fun BarChart(data: Map<Int, Int>) {
-        val maxCount = (data.values.maxOrNull() ?: 1).toFloat()
-        val barColors = listOf(Color(0xFF4CAF50), Color(0xFFFFC107), Color(0xFFF44336), Color(0xFF2196F3), Color(0xFF9C27B0))
-
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(200.dp),
-            horizontalArrangement = Arrangement.SpaceEvenly,
-            verticalAlignment = Alignment.Bottom
-        ) {
-            data.toSortedMap().entries.toList().forEachIndexed { index, entry ->
-                val (mark, count) = entry
-                val barHeightRatio = count / maxCount
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Bottom
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .height((150 * barHeightRatio).dp)
-                            .width(30.dp)
-                            .background(barColors[index % barColors.size])
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(mark.toString(), fontWeight = FontWeight.Bold)
-                    Text("$count", fontSize = 12.sp)
-                }
-            }
-        }
-    }
-
-
+    //Страница со справочником вопрос - ответ
     @Composable
     private fun DirectoryPage(){
         val expandedItems = remember { mutableStateMapOf<String, Boolean>() }
@@ -1287,6 +1034,7 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    //Страница для учителя, где он отмечает посещаемость учеников
     @Composable
     private fun VisitsPage() {
         val date = "${chosenMonth.value}: ${chosenDay.value}"
@@ -1342,7 +1090,7 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    //Добавить стили
+    //Страница с посещениями студента, завсисит от того, кто вошёл в аккаунт
     @Composable
     fun SimpleAttendancePage() {
         var dataVisit by remember { mutableStateOf<Map<Int, String?>>(emptyMap()) }
@@ -1401,6 +1149,7 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    //График с отношением посещений и отсутсвий
     @Composable
     fun AttendanceBarChart(visitsStat: Map<String?, List<String?>>) {
         val presenceCount = visitsStat["П"]?.size ?: 0
@@ -1477,6 +1226,7 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    //Легенда
     @Composable
     fun LegendItem(color: Color, text: String) {
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -1491,6 +1241,7 @@ class MainActivity : ComponentActivity() {
     }
     //endregion
 
+    //Для учителя, выбрать данные для какого числа, предмета, месяца и класса проставить посещаемость
     @Composable
     private fun ChooseVisitsDataPage() {
         var subjectList by remember {mutableStateOf<List<String>>(emptyList())}
