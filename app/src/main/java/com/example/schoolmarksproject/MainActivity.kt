@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -72,6 +73,7 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.sp
@@ -205,11 +207,15 @@ class MainActivity : ComponentActivity() {
                     startDestination = if (user == null) "login" else "monthsGrid"
                 ) {
                     composable("login") {
+                        Column {
+                            header()
+                            loginPageVisits()
+                        }
                         //SimpleAttendancePage()
                         //SubjectGradesPage()
                         //saveMarks()
                         //loginPageMarks()
-                        loginPageVisits()
+
                     }
 
                     composable("monthsGrid") {
@@ -240,7 +246,10 @@ class MainActivity : ComponentActivity() {
                     }
                     composable("register") {
                         //registerPageMarks()
-                        registerPageVisits()
+                        Column {
+                            header()
+                            registerPageVisits()
+                        }
                     }
                     composable("directory"){
                         Column {  header()
@@ -1096,37 +1105,51 @@ class MainActivity : ComponentActivity() {
                 horizontalArrangement = Arrangement.SpaceBetween,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                if (currentUser.role == "Ученик") {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            imageVector = Icons.Default.School,
-                            contentDescription = "Оценки",
-                            tint = textColor,
-                            modifier = Modifier.size(20.dp)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = "Посещаемость",
-                            color = textColor,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 18.sp,
-                            modifier = Modifier.clickable{navController.navigate("monthsGrid")}
-                        )
+                var user = Firebase.auth.currentUser
+                if (user != null) {
+                    if (currentUser.role == "Ученик") {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Default.School,
+                                contentDescription = "Оценки",
+                                tint = textColor,
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = "Посещаемость",
+                                color = textColor,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 18.sp,
+                                modifier = Modifier.clickable { navController.navigate("monthsGrid") }
+                            )
+                        }
+                    } else {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Default.MenuBook,
+                                contentDescription = "Дневник",
+                                tint = textColor,
+                                modifier = Modifier
+                                    .size(20.dp)
+                                    .clickable { navController.navigate("subjectGradesPage") }
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = "Посещаемость",
+                                Modifier.clickable { navController.navigate("monthsGrid") },
+                                color = textColor,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 14.sp
+                            )
+                        }
                     }
-                } else {
+
+                }else{
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            imageVector = Icons.Default.MenuBook,
-                            contentDescription = "Дневник",
-                            tint = textColor,
-                            modifier = Modifier
-                                .size(20.dp)
-                                .clickable { navController.navigate("subjectGradesPage") }
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "Посещаемость",
-                            Modifier.clickable{navController.navigate("monthsGrid")},
+                            text = "Войти",
+                            Modifier.clickable { navController.navigate("login") },
                             color = textColor,
                             fontWeight = FontWeight.Bold,
                             fontSize = 14.sp
@@ -1309,7 +1332,7 @@ class MainActivity : ComponentActivity() {
                         value = user.visit,
                         onValueChange = {
                             if(checkVisitInputValue(it)){
-                                user.visit = it
+                                user.visit = it.uppercase()
                             } },  // Логика не меняется, оставляем пустым
                         modifier = Modifier.width(120.dp)
                     )
@@ -1328,9 +1351,11 @@ class MainActivity : ComponentActivity() {
     @Composable
     fun SimpleAttendancePage() {
         var dataVisit by remember { mutableStateOf<Map<Int, String?>>(emptyMap()) }
+        var visitsStat by remember { mutableStateOf<Map<String?, List<String?>>>(emptyMap()) }
 
         LaunchedEffect(chosenMonth.value, chosenSubject.value) {
             dataVisit = getAttendanceListForMonth()
+            visitsStat = dataVisit.values.filter { visit -> visit != null }.groupBy { it }
         }
 
         Column(
@@ -1345,6 +1370,11 @@ class MainActivity : ComponentActivity() {
             Text("Предмет", style = MaterialTheme.typography.titleMedium)
             createSelect(subjects[0], subjects, chosenSubject)
             Spacer(modifier = Modifier.height(24.dp))
+
+            if(visitsStat["Н"]?.let { it.size == 1 } == true){
+                Text("У вас проблема с предметом, ваша посещаемость слишком низка, вы отсутвовали на ${visitsStat["P"]?.size} занятий!", color = Color.Red)
+            }
+            AttendanceBarChart(visitsStat)
 
             Text("Посещаемость", style = MaterialTheme.typography.titleLarge)
             Spacer(modifier = Modifier.height(12.dp))
@@ -1373,6 +1403,95 @@ class MainActivity : ComponentActivity() {
                     Divider()
                 }
             }
+        }
+    }
+
+    @Composable
+    fun AttendanceBarChart(visitsStat: Map<String?, List<String?>>) {
+        val presenceCount = visitsStat["П"]?.size ?: 0
+        val absenceCount = visitsStat["Н"]?.size ?: 0
+        val total = presenceCount + absenceCount
+
+        if (total == 0) {
+            Text("Нет данных о посещениях", modifier = Modifier.padding(16.dp))
+            return
+        }
+
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
+        ) {
+            // Заголовок
+            Text(
+                text = "Статистика посещений",
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
+
+            // Полоса статистики
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(24.dp)
+                    .clip(RoundedCornerShape(4.dp))
+                    .background(Color.LightGray)
+            ) {
+                // Часть присутствий (только если есть присутствия)
+                if (presenceCount > 0) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxHeight()
+                            .weight(presenceCount.toFloat())
+                            .background(Color.Green)
+                    )
+                }
+
+                // Часть отсутствий (только если есть отсутствия)
+                if (absenceCount > 0) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxHeight()
+                            .weight(absenceCount.toFloat())
+                            .background(Color.Red)
+                    )
+                }
+
+                // Специальный случай, когда только один тип данных
+                if (presenceCount == 0 || absenceCount == 0) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .fillMaxHeight()
+                            .background(if (presenceCount > 0) Color.Green else Color.Red)
+                    )
+                }
+            }
+
+            // Легенда
+            Row(
+                modifier = Modifier.padding(top = 8.dp),
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                if (presenceCount > 0) {
+                    LegendItem(Color.Green, "Присутствия: $presenceCount")
+                }
+                if (absenceCount > 0) {
+                    LegendItem(Color.Red, "Отсутствия: $absenceCount")
+                }
+            }
+        }
+    }
+
+    @Composable
+    fun LegendItem(color: Color, text: String) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Box(
+                modifier = Modifier
+                    .size(12.dp)
+                    .background(color)
+            )
+            Spacer(modifier = Modifier.width(4.dp))
+            Text(text)
         }
     }
     //endregion
