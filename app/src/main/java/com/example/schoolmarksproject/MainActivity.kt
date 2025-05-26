@@ -1130,7 +1130,7 @@ class MainActivity : ComponentActivity() {
             createSelect(subjects[0], subjects, chosenSubject)
             Spacer(modifier = Modifier.height(24.dp))
 
-            if(visitsStat["Н"]?.let { it.size == 1 } == true){
+            if(visitsStat["Н"]?.let { it.size > 5 } == true){
                 Text("У вас проблема с предметом, ваша посещаемость слишком низка, вы отсутвовали на ${visitsStat["P"]?.size} занятий!", color = Color.Red)
             }
             AttendanceBarChart(visitsStat)
