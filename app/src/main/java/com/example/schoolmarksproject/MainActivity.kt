@@ -1594,7 +1594,8 @@ class MainActivity : ComponentActivity() {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(50.dp)
+                .padding(top = 20.dp)
+                .height(70.dp)
                 .background(backgroundColor)
                 .padding(horizontal = 16.dp),
             contentAlignment = Alignment.CenterStart
