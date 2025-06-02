@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -117,16 +118,18 @@ class MainActivity : ComponentActivity() {
         "декабрь" to 31
     )
     private var auth = Firebase.auth
-    private var subjects = listOf("Основы геодезии",
-            "Топографическая съемка",
-            "Геодезические инструменты и оборудование",
-            "Геоинформационные системы",
-            "Измерения и расчеты в геодезии",
-            "Проектирование геодезических работ",
-            "Картография и картографические технологии",
-            "Геодезические сети и их обработка",
-            "Землеустройство и кадастр",
-            "Геодезия и строительная геодезия")
+    private var subjects = listOf(
+        "Основы геодезии",
+        "Топографическая съемка",
+        "Геодезические инструменты и оборудование",
+        "Геоинформационные системы",
+        "Измерения и расчеты в геодезии",
+        "Проектирование геодезических работ",
+        "Картография и картографические технологии",
+        "Геодезические сети и их обработка",
+        "Землеустройство и кадастр",
+        "Геодезия и строительная геодезия"
+    )
     var directory = mapOf(
         "Вопрос: Как зарегистрироваться в системе?" to " Ответ: Для регистрации необходимо заполнить форму с личными данными",
         "Вопрос: Как просмотреть свою посещаемость?" to "Ответ: Выберите месяц и предмет, после чего вы увидите все записи о посещаемости.",
@@ -134,9 +137,9 @@ class MainActivity : ComponentActivity() {
         "Вопрос: Как обжаловать отметку о посещаемости?" to "Ответ: Свяжитесь с преподавателем через систему или по электронной почте для обсуждения вопроса.",
         "Вопрос: Могу ли я видеть посещаемость других студентов?" to " Ответ: Нет, доступ к посещаемости других студентов ограничен для защиты конфиденциальности.",
         "Вопрос: Что делать, если я заметил ошибку в своей посещаемости?" to " Ответ: Сообщите об этом преподавателю или администратору системы для исправления.",
-       )
-    private lateinit var currentUser : User
-    private lateinit var user : FirebaseUser
+    )
+    private lateinit var currentUser: User
+    private lateinit var user: FirebaseUser
 
     //endregion
 
@@ -173,13 +176,13 @@ class MainActivity : ComponentActivity() {
         lifecycleScope.launch {
             try {
                 usersList.addAll(getAllUsers("Visits"))
-                if (user != null){
+                if (user != null) {
                     currentUser = usersList.firstOrNull { it.email == user?.email }!!
-                    if (currentUser.role == "Ученик"){
-                        if (currentUser.classNumber == ""){
+                    if (currentUser.role == "Ученик") {
+                        if (currentUser.classNumber == "") {
                             IsneedClassChoose.value = true
 
-                        }else{
+                        } else {
                             chosenClass.value = currentUser.classNumber!!
 
                         }
@@ -192,7 +195,7 @@ class MainActivity : ComponentActivity() {
             }
         }
         setContent {
-            if (isDataLoaded.value){
+            if (isDataLoaded.value) {
                 navController = rememberNavController()
                 NavHost(
                     navController = navController,
@@ -211,13 +214,13 @@ class MainActivity : ComponentActivity() {
                     }
 
                     composable("monthsGrid") {
-                        if (currentUser.role == "Учитель"){
+                        if (currentUser.role == "Учитель") {
                             Column {
                                 header()
                                 ChooseVisitsDataPage()
                             }
 
-                        }else{
+                        } else {
                             Column {
                                 header()
                                 SimpleAttendancePage()
@@ -234,14 +237,14 @@ class MainActivity : ComponentActivity() {
                         }
 
                     }
-                    composable ("teacherVisitsPage"){
+                    composable("teacherVisitsPage") {
                         Column {
                             header()
                             ChooseVisitsDataPage()
                         }
 
                     }
-                    composable("visitsPage"){
+                    composable("visitsPage") {
                         Column {
                             header()
                             VisitsPage()
@@ -254,20 +257,20 @@ class MainActivity : ComponentActivity() {
                             registerPageVisits()
                         }
                     }
-                    composable("directory"){
+                    composable("directory") {
                         Column {
                             header()
                             DirectoryPage()
                         }
                     }
-                    composable ("settingsPage"){
-                        Column{
+                    composable("settingsPage") {
+                        Column {
                             header()
                             SettingsPage()
                         }
                     }
                 }
-            }else{
+            } else {
                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     CircularProgressIndicator()
                 }
@@ -276,7 +279,7 @@ class MainActivity : ComponentActivity() {
     }
 
     //Получение всех классов
-    private suspend fun getAllClasses(classesDivision : String) : List<String>{
+    private suspend fun getAllClasses(classesDivision: String): List<String> {
         val database = Firebase.database.reference
         val dataRef = database.child(classesDivision).child("Classes")
         val snapshot = dataRef.get().await()
@@ -310,7 +313,7 @@ class MainActivity : ComponentActivity() {
     }
 
     //Получает все учебные предметы
-    private suspend fun getAllSubjects() : List<String>{
+    private suspend fun getAllSubjects(): List<String> {
         var database = Firebase.database.reference
         var dataRef = database.child("Visits").child("Subjects")
         var snapshot = dataRef.get().await()
@@ -321,12 +324,12 @@ class MainActivity : ComponentActivity() {
     }
 
     //Создаётся класс и к нему добавляются все учебные предметы
-    private suspend fun createClassAndAdd(className : String){
+    private suspend fun createClassAndAdd(className: String) {
         var subjects = getAllSubjects()
         var database = Firebase.database.reference.child("Visits")
 
         database.child("Classes").child(className).setValue(className)
-        subjects.forEach {subject ->
+        subjects.forEach { subject ->
             database.child("Visits").child(className).child(subject).setValue("")
         }
     }
@@ -363,7 +366,7 @@ class MainActivity : ComponentActivity() {
                 email = it.child("email").value.toString(),
                 visit = it.child("visit").value.toString(),
 
-            )
+                )
         }
 
         // 3. Соединяем: по каждому студенту ищем его посещение по email
@@ -378,7 +381,7 @@ class MainActivity : ComponentActivity() {
     }
 
     //Проверка значения поля учителя
-    private fun checkVisitInputValue(visitStatus : String) : Boolean{
+    private fun checkVisitInputValue(visitStatus: String): Boolean {
         var allowSymbols = ArrayList<Char>()
         allowSymbols.add('-')
         allowSymbols.add('P')
@@ -386,23 +389,31 @@ class MainActivity : ComponentActivity() {
         allowSymbols.add('Н')
         allowSymbols.add('П')
 
-        if (visitStatus.length > 1){return false}
+        if (visitStatus.length > 1) {
+            return false
+        }
         if (visitStatus == "") return true
         return (allowSymbols.contains(visitStatus[0].uppercaseChar()))
     }
 
     //сохранения статуса посещения студентами
-    private fun saveVisitClassStatus(visits : List<Visit>) {
+    private fun saveVisitClassStatus(visits: List<Visit>) {
         var database = Firebase.database.reference
         var dataRef = database.child("Visits").child("Visits").child(chosenClass.value)
             .child(chosenSubject.value).child(chosenMonth.value).child(chosenDay.value)
-        visits.forEach {visit ->
+        visits.forEach { visit ->
             dataRef.child(visit.email.substringBefore('.')).setValue(visit)
         }
     }
 
     //добавление пользователя в бд
-    private fun saveUserToFirebase(email : String, role : String, name : String, surname : String, className : String = ""){
+    private fun saveUserToFirebase(
+        email: String,
+        role: String,
+        name: String,
+        surname: String,
+        className: String = ""
+    ) {
         var database = Firebase.database.reference
         var dataRef = database.child("Visits").child("Users").child(email.split('.')[0])
 
@@ -410,11 +421,11 @@ class MainActivity : ComponentActivity() {
     }
 
     //проверка, есть ли такой класс
-    private suspend fun checkClass(className : String) : Boolean{
+    private suspend fun checkClass(className: String): Boolean {
         var database = Firebase.database.reference
         var dataRef = database.child("Visits").child("Classes")
         var snapshot = dataRef.get().await()
-        var isClassExist=  snapshot.children.map { it.value }.contains(className)
+        var isClassExist = snapshot.children.map { it.value }.contains(className)
         return isClassExist
     }
 
@@ -432,9 +443,9 @@ class MainActivity : ComponentActivity() {
             .addOnSuccessListener {
                 user = Firebase.auth.currentUser!!
                 var isUserExist = usersList.filter { it -> it.email == user.email }.size != 0
-                if (isUserExist){
+                if (isUserExist) {
                     currentUser = usersList.first { it -> it.email == user.email }
-                }else{
+                } else {
                     logOut()
                     Toast.makeText(
                         baseContext,
@@ -444,7 +455,7 @@ class MainActivity : ComponentActivity() {
                     return@addOnSuccessListener
                 }
 
-                if (currentUser.role == "Ученик"){
+                if (currentUser.role == "Ученик") {
                     chosenClass.value = currentUser.classNumber!!
                 }
                 navController.navigate("monthsGrid")
@@ -460,10 +471,11 @@ class MainActivity : ComponentActivity() {
     }
 
     //Функция регистрации пользователя
-    private suspend fun registerVisits(){
+    private suspend fun registerVisits() {
         var isClassExist = false
         if (email.value.isEmpty() || password.value.isEmpty() || name.value.isEmpty()
-            || surname.value.isEmpty()){
+            || surname.value.isEmpty()
+        ) {
             Toast.makeText(
                 baseContext,
                 "Заполните все поля",
@@ -471,7 +483,7 @@ class MainActivity : ComponentActivity() {
             ).show()
             return
         }
-        if (role.value == ""){
+        if (role.value == "") {
             Toast.makeText(
                 baseContext,
                 "Выберите роль",
@@ -479,10 +491,10 @@ class MainActivity : ComponentActivity() {
             ).show()
             return
         }
-        if (role.value == "Ученик"){
+        if (role.value == "Ученик") {
             isClassExist = checkClass(chosenClass.value)
             classNumber.value = chosenClass.value
-            if (!isClassExist){
+            if (!isClassExist) {
                 Toast.makeText(
                     baseContext,
                     "Данный класс не существует",
@@ -497,14 +509,27 @@ class MainActivity : ComponentActivity() {
                 if (task.isSuccessful) {
 
                     user = auth.currentUser!!
-                    if (role.value == "Ученик"){
+                    if (role.value == "Ученик") {
                         navController.navigate("visitsMainPage")
-                        saveUserToFirebase(email.value, role.value, name.value, surname.value, chosenClass.value)
-                        currentUser = User(name.value, surname.value, email = email.value, role = role.value, classNumber = chosenClass.value)
-                    }else{
+                        saveUserToFirebase(
+                            email.value,
+                            role.value,
+                            name.value,
+                            surname.value,
+                            chosenClass.value
+                        )
+                        currentUser = User(
+                            name.value,
+                            surname.value,
+                            email = email.value,
+                            role = role.value,
+                            classNumber = chosenClass.value
+                        )
+                    } else {
                         navController.navigate("teacherVisitsPage")
-                        saveUserToFirebase(email.value, role.value, name.value, surname.value )
-                        currentUser = User(name.value, surname.value, email = email.value, role = role.value)
+                        saveUserToFirebase(email.value, role.value, name.value, surname.value)
+                        currentUser =
+                            User(name.value, surname.value, email = email.value, role = role.value)
                     }
 
                     usersList.add(currentUser)
@@ -519,27 +544,28 @@ class MainActivity : ComponentActivity() {
                     ).show()
                 }
             }
-        }
+    }
+
     //Выход из аккаунта
     private fun logOut() {
         Firebase.auth.signOut()
     }
 
     //Создаём словарь с День месяца : Отметка о посещении
-    private suspend fun getAttendanceListForMonth (): Map<Int, String?> {
+    private suspend fun getAttendanceListForMonth(): Map<Int, String?> {
         var database = Firebase.database.reference
         val attendanceList = mutableMapOf<Int, String?>()
         var dataRef = database.child("Visits").child("Visits").child(currentUser.classNumber!!)
             .child(chosenSubject.value).child(chosenMonth.value)
         var snapshot = dataRef.get().await()
         var days = monthsWithDays[chosenMonth.value]
-        for (day in 1..days!!){
+        for (day in 1..days!!) {
             var daySnapShot = snapshot.child(day.toString())
-            if (daySnapShot.child(currentUser.email!!.substringBefore('.')).exists()){
-                var data = snapshot.child(day.toString()).child(currentUser.email!!.substringBefore('.'))
+            if (daySnapShot.child(currentUser.email!!.substringBefore('.')).exists()) {
+                var data =
+                    snapshot.child(day.toString()).child(currentUser.email!!.substringBefore('.'))
                 attendanceList.put(day, data.child("visit").value.toString())
-            }
-            else{
+            } else {
                 attendanceList.put(day, null)
             }
         }
@@ -664,8 +690,8 @@ class MainActivity : ComponentActivity() {
 
     //страница регистрации
     @Composable
-    private fun registerPageVisits(){
-        var isUserStudent by remember{ mutableStateOf(true)}
+    private fun registerPageVisits() {
+        var isUserStudent by remember { mutableStateOf(true) }
         role.value = "Ученик"
 
 
@@ -753,15 +779,14 @@ class MainActivity : ComponentActivity() {
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                Row{
+                Row {
                     Checkbox(
                         checked = isUserStudent,
                         onCheckedChange = {
                             isUserStudent = !isUserStudent
-                            if (isUserStudent){
+                            if (isUserStudent) {
                                 role.value = "Ученик"
-                            }
-                            else{
+                            } else {
                                 role.value = "Учитель"
                             }
                         }
@@ -770,7 +795,7 @@ class MainActivity : ComponentActivity() {
                 }
 
 
-                if (isUserStudent){
+                if (isUserStudent) {
                     Spacer(modifier = Modifier.height(16.dp))
                     OutlinedTextField(
                         value = chosenClass.value,
@@ -792,9 +817,11 @@ class MainActivity : ComponentActivity() {
 
                 // Кнопка регистрации
                 FilledTonalButton(
-                    onClick = { lifecycleScope.launch {
-                        registerVisits()
-                    }},
+                    onClick = {
+                        lifecycleScope.launch {
+                            registerVisits()
+                        }
+                    },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(50.dp),
@@ -845,15 +872,15 @@ class MainActivity : ComponentActivity() {
 
     //Функция для создания select
     @Composable
-    fun createSelect(title : String, itemsList : List<String>, targetValue : MutableState<String>){
-        var expandedValues by remember {mutableStateOf(false);}
-        var itemValue by remember {mutableStateOf(title)}
+    fun createSelect(title: String, itemsList: List<String>, targetValue: MutableState<String>) {
+        var expandedValues by remember { mutableStateOf(false); }
+        var itemValue by remember { mutableStateOf(title) }
 
-        Row (
+        Row(
             modifier = Modifier.clickable {
                 expandedValues = !expandedValues
             },
-        ){
+        ) {
             Text(text = itemValue)
             Spacer(modifier = Modifier.height(50.dp))
             Icon(imageVector = Icons.Filled.ArrowDropDown, "downList")
@@ -1007,13 +1034,14 @@ class MainActivity : ComponentActivity() {
     }
 
 
-
     //кнопка для перехода в настройки(выход из аккаунта)
     @Composable
-    private fun SettingsPage(){
-        Box(Modifier.fillMaxSize()){
-            Column ( horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier.align(Alignment.Center)){
+    private fun SettingsPage() {
+        Box(Modifier.fillMaxSize()) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.align(Alignment.Center)
+            ) {
                 Button(onClick = {
                     logOut()
                     navController.navigate("login")
@@ -1026,7 +1054,7 @@ class MainActivity : ComponentActivity() {
 
     //Страница со справочником вопрос - ответ
     @Composable
-    private fun DirectoryPage(){
+    private fun DirectoryPage() {
         val expandedItems = remember { mutableStateMapOf<String, Boolean>() }
 
         LazyColumn(
@@ -1087,7 +1115,7 @@ class MainActivity : ComponentActivity() {
                 .padding(16.dp)
         ) {
 
-            Row(){
+            Row() {
                 // Шапка
                 Text(date, fontSize = 14.sp, color = Color.Gray)
                 Text(subject, fontSize = 20.sp, fontWeight = FontWeight.Bold)
@@ -1109,9 +1137,10 @@ class MainActivity : ComponentActivity() {
                     TextField(
                         value = user.visit,
                         onValueChange = {
-                            if(checkVisitInputValue(it)){
+                            if (checkVisitInputValue(it)) {
                                 user.visit = it.uppercase()
-                            } },  // Логика не меняется, оставляем пустым
+                            }
+                        },  // Логика не меняется, оставляем пустым
                         modifier = Modifier.width(120.dp)
                     )
                 }
@@ -1149,8 +1178,11 @@ class MainActivity : ComponentActivity() {
             createSelect(subjects[0], subjects, chosenSubject)
             Spacer(modifier = Modifier.height(24.dp))
 
-            if(visitsStat["Н"]?.let { it.size > 5 } == true){
-                Text("У вас проблема с предметом, ваша посещаемость слишком низка, вы отсутвовали на ${visitsStat["Н"]?.size} занятий!", color = Color.Red)
+            if (visitsStat["Н"]?.let { it.size > 5 } == true) {
+                Text(
+                    "У вас проблема с предметом, ваша посещаемость слишком низка, вы отсутвовали на ${visitsStat["Н"]?.size} занятий!",
+                    color = Color.Red
+                )
             }
             AttendanceBarChart(visitsStat)
 
@@ -1279,14 +1311,14 @@ class MainActivity : ComponentActivity() {
     //Для учителя, выбрать данные для какого числа, предмета, месяца и класса проставить посещаемость
     @Composable
     private fun ChooseVisitsDataPage() {
-        var subjectList by remember {mutableStateOf<List<String>>(emptyList())}
-        var month by remember {mutableStateOf<String>("")}
-        var classList by remember {mutableStateOf<List<String>>(emptyList())}
+        var subjectList by remember { mutableStateOf<List<String>>(emptyList()) }
+        var month by remember { mutableStateOf<String>("") }
+        var classList by remember { mutableStateOf<List<String>>(emptyList()) }
 
-        var isSubjectChoosed by remember {mutableStateOf(false)}
-        var isClassChoosed by remember {mutableStateOf(false)}
-        var isMonthChoosed by remember {mutableStateOf(false)}
-        var isDayChoosed by remember {mutableStateOf(false)}
+        var isSubjectChoosed by remember { mutableStateOf(false) }
+        var isClassChoosed by remember { mutableStateOf(false) }
+        var isMonthChoosed by remember { mutableStateOf(false) }
+        var isDayChoosed by remember { mutableStateOf(false) }
 
         Box(
             modifier = Modifier
@@ -1298,16 +1330,21 @@ class MainActivity : ComponentActivity() {
                 classList = getAllClasses("Visits")
             }
 
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-
-                // Список предметов
-                LazyColumn(
+            // Основной контейнер с прокруткой
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                // Список предметов (не прокручиваемый)
+                Column(
                     modifier = Modifier
                         .fillMaxWidth()
                         .background(Color(0xFFF0F0F0), RoundedCornerShape(8.dp))
                         .padding(8.dp)
                 ) {
-                    items(subjectList) { subject ->
+                    subjectList.forEach { subject ->
                         Text(
                             text = subject,
                             modifier = Modifier
@@ -1322,93 +1359,111 @@ class MainActivity : ComponentActivity() {
                     }
                 }
 
-                // Сетка месяцев
-                if (isSubjectChoosed == true) {
-                    LazyVerticalGrid(
-                        columns = GridCells.Fixed(4),
+                // Сетка месяцев (с ограниченной высотой)
+                if (isSubjectChoosed) {
+                    Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(top = 4.dp),
-                        verticalArrangement = Arrangement.spacedBy(6.dp),
-                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            .heightIn(max = 200.dp) // Ограничиваем максимальную высоту
+                            .padding(top = 4.dp)
                     ) {
-                        items(months.size) { i ->
-                            Box(
-                                modifier = Modifier
-                                    .background(Color(0xFFE0E0E0), RoundedCornerShape(6.dp))
-                                    .clickable {
-                                        month = months[i]
-                                        chosenMonth.value = month
-                                        isMonthChoosed = true
-                                    }
-                                    .padding(6.dp)
-                            ) {
-                                Text(
-                                    months[i],
-                                    style = MaterialTheme.typography.labelSmall
-                                )
+                        LazyVerticalGrid(
+                            columns = GridCells.Fixed(4),
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalArrangement = Arrangement.spacedBy(6.dp),
+                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                            userScrollEnabled = false
+                        ) {
+                            items(months.size) { i ->
+                                Box(
+                                    modifier = Modifier
+                                        .background(Color(0xFFE0E0E0), RoundedCornerShape(6.dp))
+                                        .clickable {
+                                            month = months[i]
+                                            chosenMonth.value = month
+                                            isMonthChoosed = true
+                                        }
+                                        .padding(6.dp)
+                                ) {
+                                    Text(
+                                        months[i],
+                                        style = MaterialTheme.typography.labelSmall
+                                    )
+                                }
                             }
                         }
                     }
                 }
 
-                // Сетка дней
-                if (isMonthChoosed == true) {
-                    val days = monthsWithDays[month]!!
-                    LazyVerticalGrid(
-                        columns = GridCells.Fixed(6),
+                // Сетка дней (с ограниченной высотой)
+                if (isMonthChoosed) {
+                    val days = monthsWithDays[month]
+                    Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(top = 4.dp),
-                        verticalArrangement = Arrangement.spacedBy(6.dp),
-                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            .heightIn(max = 300.dp) // Ограничиваем максимальную высоту
+                            .padding(top = 4.dp)
                     ) {
-                        items(days) { day ->
-                            Box(
-                                modifier = Modifier
-                                    .background(Color(0xFFD0D0D0), RoundedCornerShape(6.dp))
-                                    .clickable {
-                                        chosenDay.value = day.toString()
-                                        isDayChoosed = true
-                                    }
-                                    .padding(6.dp)
-                            ) {
-                                Text(
-                                    day.toString(),
-                                    style = MaterialTheme.typography.labelSmall
-                                )
+                        LazyVerticalGrid(
+                            columns = GridCells.Fixed(6),
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalArrangement = Arrangement.spacedBy(6.dp),
+                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                            userScrollEnabled = false
+                        ) {
+                            items(days!!) { day ->
+                                Box(
+                                    modifier = Modifier
+                                        .background(Color(0xFFD0D0D0), RoundedCornerShape(6.dp))
+                                        .clickable {
+                                            chosenDay.value = day.toString()
+                                            isDayChoosed = true
+                                        }
+                                        .padding(6.dp)
+                                ) {
+                                    Text(
+                                        day.toString(),
+                                        style = MaterialTheme.typography.labelSmall
+                                    )
+                                }
                             }
                         }
                     }
                 }
 
-                // Список классов
-                if (isDayChoosed == true) {
-                    LazyVerticalGrid(
-                        columns = GridCells.Fixed(4),
+                // Список классов (с ограниченной высотой)
+                if (isDayChoosed) {
+                    Box(
                         modifier = Modifier
                             .fillMaxWidth()
+                            .heightIn(max = 400.dp) // Ограничиваем максимальную высоту
                             .background(Color(0xFFF8F8F8), RoundedCornerShape(8.dp))
-                            .padding(8.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            .padding(8.dp)
                     ) {
-                        items(classList.size) { i ->
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .background(Color(0xFFE0E0E0), RoundedCornerShape(6.dp))
-                                    .clickable {
-                                        chosenClass.value = classList[i]
-                                        isClassChoosed = true
-                                    }
-                                    .padding(8.dp)
-                            ) {
-                                Text(
-                                    text = classList[i],
-                                    style = MaterialTheme.typography.labelSmall,
-                                    modifier = Modifier.align(Alignment.Center)
-                                )
+                        LazyVerticalGrid(
+                            columns = GridCells.Fixed(4),
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalArrangement = Arrangement.spacedBy(8.dp),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            userScrollEnabled = false
+                        ) {
+                            items(classList.size) { i ->
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .background(Color(0xFFE0E0E0), RoundedCornerShape(6.dp))
+                                        .clickable {
+                                            chosenClass.value = classList[i]
+                                            isClassChoosed = true
+                                        }
+                                        .padding(8.dp)
+                                ) {
+                                    Text(
+                                        text = classList[i],
+                                        style = MaterialTheme.typography.labelSmall,
+                                        modifier = Modifier.align(Alignment.Center)
+                                    )
+                                }
                             }
                         }
                     }
@@ -1419,8 +1474,8 @@ class MainActivity : ComponentActivity() {
                     Button(
                         onClick = { navController.navigate("visitsPage") },
                         modifier = Modifier
-                            .align(Alignment.CenterHorizontally)
-                            .padding(top = 12.dp)
+                            .fillMaxWidth()
+                            .padding(vertical = 12.dp)
                     ) {
                         Text("Выбрать", style = MaterialTheme.typography.bodySmall)
                     }
