@@ -988,7 +988,13 @@ class MainActivity : ComponentActivity() {
             ) {
                 itemsList.forEach { item ->
                     DropdownMenuItem(
-                        text = { Text(item) },
+                        text = {
+                            if (item == "Ученик"){
+                                Text("Студент")
+                            }else{
+                                Text(item)
+                            }
+                               },
                         onClick = {
                             expandedValues = false
                             targetValue.value = item
