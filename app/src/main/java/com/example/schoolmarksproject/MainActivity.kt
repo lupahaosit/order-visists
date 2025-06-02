@@ -969,6 +969,7 @@ class MainActivity : ComponentActivity() {
                             IconButton(
                                 onClick = { navController.navigate("subjectGradesPage") },
                                 modifier = Modifier
+
                                     .size(40.dp)
                                     .background(iconBackground, CircleShape)
                             ) {
