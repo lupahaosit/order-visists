@@ -169,7 +169,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        //logOut()
+        logOut()
         var user = Firebase.auth.currentUser
         chosenMonth.value = months[0]
         chosenSubject.value = subjects[0]
